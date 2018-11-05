@@ -17,17 +17,28 @@ CCamera objCamera;	//Create objet Camera
 
 GLfloat g_lookupdown = 0.0f;    // Look Position In The Z-Axis (NEW) 
 
+CTexture cielo;
+
+CFiguras figCielo;
+CFiguras cubo;
+CFiguras sky;
+
 int font=(int)GLUT_BITMAP_HELVETICA_18;
 			
 void InitGL ( GLvoid )     // Inicializamos parametros
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);				// Negro de fondo	
 
+	glEnable(GL_TEXTURE_2D);
+
 	glClearDepth(1.0f);									// Configuramos Depth Buffer
 	glEnable(GL_DEPTH_TEST);							// Habilitamos Depth Testing
 	glDepthFunc(GL_LEQUAL);								// Tipo de Depth Testing a realizar
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+	cielo.LoadTGA("Textures/CieloAtardecer.tga");
+	cielo.BuildGLTexture();
+	cielo.ReleaseImage();
 
 	objCamera.Position_Camera(0,2.5f,3, 0,2.5f,0, 0, 1, 0);
 
@@ -50,20 +61,34 @@ void display ( void )   // Creamos la funcion donde se dibuja
 {
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
-	glLoadIdentity();
-	glPushMatrix();
-		glRotatef(g_lookupdown, 1.0f, 0, 0);
+	glLoadIdentity(); //Cargamos matriz identidad
 
-		gluLookAt(objCamera.mPos.x, objCamera.mPos.y, objCamera.mPos.z,
-			objCamera.mView.x, objCamera.mView.y, objCamera.mView.z,
-			objCamera.mUp.x, objCamera.mUp.y, objCamera.mUp.z);
+	glPushMatrix(); //Primer Push matriz
 
-		glPushMatrix();
-			glColor3f(1.0, 1.0, 0.0);
-			glutSolidSphere(4.0, 20, 20);
-		glPopMatrix();
+			glRotatef(g_lookupdown, 1.0f, 0, 0); //Rotamos camara
 
-	glPopMatrix();
+			gluLookAt(objCamera.mPos.x, objCamera.mPos.y, objCamera.mPos.z,
+				objCamera.mView.x, objCamera.mView.y, objCamera.mView.z,
+				objCamera.mUp.x, objCamera.mUp.y, objCamera.mUp.z); //Configuramos lookat
+
+		
+			glPushMatrix(); //Segundo push matriz
+
+					glPushMatrix(); //Creamos cielo
+						glDisable(GL_LIGHTING);
+						glTranslatef(0, 60, 0);
+						figCielo.skybox(130.0, 130.0, 130.0, cielo.GLindex);
+						glEnable(GL_LIGHTING);
+					glPopMatrix();
+
+					/*glPushMatrix();
+						glColor3f(1.0, 1.0, 0.0);
+						glutSolidSphere(4.0, 20, 20);
+					glPopMatrix();*/
+
+			glPopMatrix(); //pop del segundo push matriz
+
+	glPopMatrix(); //pop del primer push matriz
 
 	glutSwapBuffers ( );
 
