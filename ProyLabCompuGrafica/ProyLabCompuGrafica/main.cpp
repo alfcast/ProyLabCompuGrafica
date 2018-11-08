@@ -18,12 +18,79 @@ CCamera objCamera;	//Create objet Camera
 GLfloat g_lookupdown = 0.0f;    // Look Position In The Z-Axis (NEW) 
 
 CTexture cielo;
+CTexture madera;
+CTexture wall;
 
+CFiguras pris;
 CFiguras figCielo;
 CFiguras cubo;
 CFiguras sky;
 
 int font=(int)GLUT_BITMAP_HELVETICA_18;
+
+void construirCasa() {
+	//Techo de la casa
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(0.0, 220.0, -10.0);
+	pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared izquierda
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(-220.0, 120.0, -10.0);
+	glRotatef(90, 0, 0, 1);
+	pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared derecha
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(220.0, 120.0, -10.0);
+	glRotatef(90, 0, 0, 1);
+	pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared trasera
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(0.0, 50.0, -180.0);
+	glRotatef(90, 1, 0, 0);
+	pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared delantera lateral
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(90.0, 50.0, 160.0);
+	glRotatef(90, 1, 0, 0);
+	pris.prisma(2.0, 260.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared puerta izquierda
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(-85.0, 50.0, 160.0);
+	glRotatef(90, 1, 0, 0);
+	pris.prisma(2.0, 90.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared puerta derecha
+	glPushMatrix();
+	glDisable(GL_LIGHTING);
+	glTranslatef(-175.0, 50.0, 160.0);
+	glRotatef(90, 1, 0, 0);
+	pris.prisma(2.0, 90.0, 340.0, wall.GLindex);
+	glEnable(GL_LIGHTING);
+	glPopMatrix();
+}
 			
 void InitGL ( GLvoid )     // Inicializamos parametros
 {
@@ -36,9 +103,18 @@ void InitGL ( GLvoid )     // Inicializamos parametros
 	glDepthFunc(GL_LEQUAL);								// Tipo de Depth Testing a realizar
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
+
 	cielo.LoadTGA("Textures/CieloAtardecer.tga");
 	cielo.BuildGLTexture();
 	cielo.ReleaseImage();
+
+	madera.LoadTGA("Textures/wood.tga");
+	madera.BuildGLTexture();
+	madera.ReleaseImage();
+
+	wall.LoadTGA("Textures/wall.tga");
+	wall.BuildGLTexture();
+	wall.ReleaseImage();
 
 	objCamera.Position_Camera(0,2.5f,3, 0,2.5f,0, 0, 1, 0);
 
@@ -77,14 +153,11 @@ void display ( void )   // Creamos la funcion donde se dibuja
 					glPushMatrix(); //Creamos cielo
 						glDisable(GL_LIGHTING);
 						glTranslatef(0, 60, 0);
-						figCielo.skybox(130.0, 130.0, 130.0, cielo.GLindex);
+						figCielo.skybox(580.0, 320.0, 580.0, cielo.GLindex);
 						glEnable(GL_LIGHTING);
 					glPopMatrix();
 
-					/*glPushMatrix();
-						glColor3f(1.0, 1.0, 0.0);
-						glutSolidSphere(4.0, 20, 20);
-					glPopMatrix();*/
+					construirCasa();
 
 			glPopMatrix(); //pop del segundo push matriz
 
@@ -113,7 +186,7 @@ void reshape ( int width , int height )   // Creamos funcion Reshape
 
 	// Tipo de Vista
 	
-	glFrustum (-0.1, 0.1,-0.1, 0.1, 0.1, 170.0);
+	glFrustum (-0.1, 0.1,-0.1, 0.1, 0.1, 700.0);
 
 	glMatrixMode(GL_MODELVIEW);							// Seleccionamos Modelview Matrix
 	glLoadIdentity();
