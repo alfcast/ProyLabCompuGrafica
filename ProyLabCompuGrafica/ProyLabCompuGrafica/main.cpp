@@ -12,7 +12,7 @@
 #include "Headers/Camera.h"
 #include "cmodel/CModel.h"
 
-
+int font = (int)GLUT_BITMAP_HELVETICA_18;
 
 CCamera objCamera;	//Create objet Camera
 
@@ -46,6 +46,14 @@ CTexture respaldo;
 CTexture empty;
 CTexture openBox;
 CTexture cabecera;
+CTexture hair;
+CTexture eye;
+CTexture discoBall;
+CTexture pillow;
+CTexture wooden;
+CTexture orangeWall;
+CTexture stoneWall;
+CTexture whiteStone;
 
 CFiguras pris;
 CFiguras figCielo;
@@ -55,7 +63,58 @@ CFiguras sky;
 //Figuras de 3D Studio
 //CModel tv;
 
-int font=(int)GLUT_BITMAP_HELVETICA_18;
+#define MAX_FRAMES 5
+int i_max_steps = 90;
+int i_curr_steps = 0;
+
+typedef struct _frame
+{
+	//Variables para GUARDAR Key Frames puerta
+	float degree;
+	float incDegree;
+
+}FRAMEP;
+
+typedef struct _framep
+{
+	//Variables para GUARDAR Key Frames perro
+	float rotPaso1;
+	float rotPaso2;
+	float posZ;
+	float incDesplaza;
+	float incDegree1;
+	float incDegree2;
+
+}FRAMEPerro;
+
+FRAMEP KeyFrameP[MAX_FRAMES];
+int playPuerta = 1;
+int playIndexP = 0;
+float rotPuerta = 0;
+
+
+FRAMEPerro KeyFramePerro[MAX_FRAMES];
+int playIndexPerro = 0;
+float rotPaso1 = 0, posZ = 0, rotPaso2 = 0;
+
+float esfera = 0, rotVentana = 0, transAlm = 0, rotAlm = 0;
+int abre = 1;
+
+int w = 500, h = 500;
+int frame = 0;
+
+
+void interpolationPuerta(void)
+{
+	KeyFrameP[playIndexP].incDegree = (KeyFrameP[playIndexP + 1].degree - KeyFrameP[playIndexP].degree) / i_max_steps;
+}
+
+void interpolationPerro(void)
+{
+	KeyFramePerro[playIndexPerro].incDegree1 = (KeyFramePerro[playIndexPerro + 1].rotPaso1 - KeyFramePerro[playIndexPerro].rotPaso1) / i_max_steps;
+	KeyFramePerro[playIndexPerro].incDegree2 = (KeyFramePerro[playIndexPerro + 1].rotPaso2 - KeyFramePerro[playIndexPerro].rotPaso2) / i_max_steps;
+	KeyFramePerro[playIndexPerro].incDesplaza = (KeyFramePerro[playIndexPerro + 1].posZ - KeyFramePerro[playIndexPerro].posZ) / i_max_steps;
+}
 
 void setMat(GLfloat *amb, GLfloat *diff, GLfloat *spec, GLfloat* shine)
 {
@@ -70,7 +129,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(0.0, 220.0, -30.0);
-		pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+		pris.prismaT(2.0, 440.0, 340.0, wall.GLindex, NULL, NULL, NULL,NULL ,orangeWall.GLindex, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -86,8 +145,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(-220.0, 0.0, -30.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 440.0, 340.0, wall.GLindex);
+		pris.prismaT(440.0, 2.0, 340.0, wall.GLindex, NULL, NULL,NULL , orangeWall.GLindex, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -95,8 +153,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(220.0, 140.0, -30.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 160.0, 340.0, wall.GLindex);
+		pris.prismaT(160.0, 2.0, 340.0, wall.GLindex, NULL, NULL, orangeWall.GLindex, NULL, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -104,8 +161,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(220.0, 0.0, 85.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 120.0, 110.0, wall.GLindex);
+		pris.prismaT(120.0, 2.0, 110.0, wall.GLindex, NULL, NULL, orangeWall.GLindex, NULL, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -114,9 +170,10 @@ void construirCasa() {
 		glDisable(GL_LIGHTING);
 		glEnable(GL_ALPHA_TEST);
 		glAlphaFunc(GL_GREATER, 0.1);
-		glTranslatef(220.0, 0.0, -30.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 120.0, 120.0, window.GLindex);
+		glTranslatef(220.0, 60.0, -30.0);
+		glRotatef(rotVentana, 0, 0, 1);
+		glTranslatef(0.0, -60.0, 0.0);
+		pris.prisma(120.0, 2.0, 120.0, window.GLindex);
 		glDisable(GL_ALPHA_TEST);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
@@ -125,8 +182,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(220.0, 0.0, -145.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 120.0, 110.0, wall.GLindex);
+		pris.prismaT(120.0, 2.0, 110.0, wall.GLindex, NULL, NULL, orangeWall.GLindex, NULL, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -134,8 +190,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(220.0, -140.0, -30.0);
-		glRotatef(90, 0, 0, 1);
-		pris.prisma(2.0, 160.0, 340.0, wall.GLindex);
+		pris.prismaT(160.0, 2.0, 340.0, wall.GLindex, NULL, NULL, orangeWall.GLindex, NULL, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -143,8 +198,7 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(0.0, 0.0, -200.0);
-		glRotatef(90, 1, 0, 0);
-		pris.prisma(2.0, 440.0, 440.0, wall.GLindex);
+		pris.prismaT(440.0, 440.0, 2.0, wall.GLindex, NULL, orangeWall.GLindex, NULL, NULL, NULL , NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
@@ -152,26 +206,62 @@ void construirCasa() {
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
 		glTranslatef(90.0, 0.0, 140.0);
-		glRotatef(90, 1, 0, 0);
-		pris.prisma(2.0, 260.0, 440.0, wall.GLindex);
-		glEnable(GL_LIGHTING);
-	glPopMatrix();
-
-	//Pared puerta izquierda
-	glPushMatrix();
-		glDisable(GL_LIGHTING);
-		glTranslatef(-85.0, 0.0, 140.0);
-		glRotatef(90, 1, 0, 0);
-		pris.prisma(2.0, 90.0, 440.0, wall.GLindex);
+		pris.prismaT(440.0, 260.0, 2.0, wall.GLindex, orangeWall.GLindex, NULL, NULL, NULL, NULL, NULL);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
 	//Pared puerta derecha
 	glPushMatrix();
 		glDisable(GL_LIGHTING);
-		glTranslatef(-175.0, 0.0, 140.0);
-		glRotatef(90, 1, 0, 0);
-		pris.prisma(2.0, 90.0, 440.0, wall.GLindex);
+		glTranslatef(-40.0, 0.0, 140.0);
+		glRotatef(rotPuerta, 0, 1, 0);
+		glTranslatef(-45.0, 0.0, 0.0);
+		pris.prisma(440.0, 90.0, 2.0, wooden.GLindex);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Pared puerta izquierda
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(-220.0, 0.0, 140.0);
+		glRotatef(-rotPuerta, 0, 1, 0);
+		glTranslatef(45.0, 0.0, 0.0);
+		pris.prisma(440.0, 90.0, 2.0, wooden.GLindex);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+}
+
+void fachada() {
+
+	//pilar izquierdo
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(-200.0, 0.0, 250.0);
+		pris.prismaT(440.0, 30.0, 30.0, stoneWall.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//pilar central
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(0.0, 0.0, 250.0);
+		pris.prismaT(440.0, 30.0, 30.0, stoneWall.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//pilar central
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(200.0, 0.0, 250.0);
+		pris.prismaT(440.0, 30.0, 30.0, stoneWall.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+
+	//Techo
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(0.0, 220.0, 220.0);
+		pris.prisma(10.0, 440.0, 150.0, stoneWall.GLindex);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
 }
@@ -315,6 +405,32 @@ void mesaSilla() {
 
 }
 
+void esferaRota() {
+	//Esfera giratoria
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glEnable(GL_ALPHA_TEST);
+		glAlphaFunc(GL_GREATER, 0.1);
+		glTranslatef(-60.0, 140.0, -90.0);
+		glRotatef(esfera, 0, 1, 0);
+		pris.esfera(20.0, 100.0, 100.0, discoBall.GLindex);
+		glDisable(GL_ALPHA_TEST);
+		glEnable(GL_LIGHTING);
+
+		//Hilo del que pende
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(0.0, 20.0, 0.0);
+			pris.cilindro(0.5, 60.0, 150.0, hair.GLindex);
+			glEnable(GL_LIGHTING);
+		glPopMatrix();
+
+	glPopMatrix();
+
+	
+
+}
+
 void cama() {
 
 	//Pata derecha cama trasera
@@ -355,11 +471,11 @@ void cama() {
 
 	//Parte superior cama madera
 	glPushMatrix();
-	glDisable(GL_LIGHTING);
-	glTranslatef(-30.0, -120.0, -70.0);
-	//glRotatef(90, 0, 1, 0);
-	pris.prismaT(6.0, 110.0, 150.0, fornitureWood.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
-	glEnable(GL_LIGHTING);
+		glDisable(GL_LIGHTING);
+		glTranslatef(-30.0, -120.0, -70.0);
+		//glRotatef(90, 0, 1, 0);
+		pris.prismaT(6.0, 110.0, 150.0, fornitureWood.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
 	glPopMatrix();
 
 	//Parte superior cama material
@@ -382,6 +498,205 @@ void cama() {
 		glDisable(GL_ALPHA_TEST);
 		glEnable(GL_LIGHTING);
 	glPopMatrix();
+
+	//Almohada
+	glPushMatrix();
+		glDisable(GL_LIGHTING);
+		glTranslatef(-30.0, -95.0+transAlm, -110.0);
+		glRotatef(60-rotAlm, 1,0, 0);
+		pris.prismaT(10.0, 70.0, 40.0, pillow.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
+	glPopMatrix();
+}
+
+void perro() {
+	//Cuerpo
+	glPushMatrix();
+
+		glDisable(GL_LIGHTING);
+		glTranslatef(280.0, -170.0, -80.0+posZ);
+		glRotatef(180, 0, 1, 0);
+		pris.prismaT(30.0, 30.0, 80.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+		glEnable(GL_LIGHTING);
+
+		//---------------------Patas---------------------------
+
+		//Pierna izquierda  frontal
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(-15.0, -25.0, -40.0);
+			glRotatef(rotPaso1,1,0,0);
+			pris.prismaT(60.0, 8.0, 8.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+			glEnable(GL_LIGHTING);
+
+			//Pata
+			glPushMatrix();
+				glDisable(GL_LIGHTING);
+				glTranslatef(0.0, -33.0, -4.0);
+				pris.prismaT(6.0, 8.0, 16.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
+
+		glPopMatrix();
+
+		//pierna izquierda  trasera
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(-15.0, -25.0, 40.0);
+			glRotatef(-rotPaso2, 1, 0, 0);
+			pris.prismaT(60.0, 8.0, 8.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+			glEnable(GL_LIGHTING);
+
+			//Pata
+			glPushMatrix();
+				glDisable(GL_LIGHTING);
+				glTranslatef(0.0, -33.0, -4.0);
+				pris.prismaT(6.0, 8.0, 16.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
+
+		glPopMatrix();
+	
+		//pierna derecha  frontal
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(15.0, -25.0, -40.0);
+			glRotatef(rotPaso2, 1, 0, 0);
+			pris.prismaT(60.0, 8.0, 8.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+			glEnable(GL_LIGHTING);
+
+			//Pata
+			glPushMatrix();
+				glDisable(GL_LIGHTING);
+				glTranslatef(0.0, -33.0, -4.0);
+				pris.prismaT(6.0, 8.0, 16.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
+
+		glPopMatrix();
+
+		//pierna derecha  trasera
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(15.0, -25.0, 40.0);
+			glRotatef(-rotPaso1, 1, 0, 0);
+			pris.prismaT(60.0, 8.0, 8.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+			glEnable(GL_LIGHTING);
+
+			//Pata
+			glPushMatrix();
+				glDisable(GL_LIGHTING);
+				glTranslatef(0.0, -33.0, -4.0);
+				pris.prismaT(6.0, 8.0, 16.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+				glEnable(GL_LIGHTING);
+			glPopMatrix();
+
+		glPopMatrix();
+
+
+		//--------------Cuello------------------------
+
+		
+		glPushMatrix();
+
+			glDisable(GL_LIGHTING);
+			glTranslatef(0.0, 30.0, -40.0);
+			glRotatef(-20,1,0,0);
+			pris.prismaT(60.0, 10.0, 10.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+			glEnable(GL_LIGHTING);
+
+			//----------------Cabeza--------------
+			glPushMatrix();
+				glDisable(GL_LIGHTING);
+				glTranslatef(0.0, 35.0, -10.0);
+				pris.prismaT(10.0, 10.0, 30.0, hair.GLindex, NULL, NULL, NULL, NULL, NULL, NULL);
+				glEnable(GL_LIGHTING);
+
+				//---------------Ojos--------------------
+				glPushMatrix();
+					glDisable(GL_LIGHTING);
+					glRotatef(20, 1, 0, 0);
+					glTranslatef(3.0, 12.0, 8.0);
+					glRotatef(-90, 0, 1, 0);
+					pris.esfera(4.0, 100.0, 100.0, eye.GLindex);
+					glEnable(GL_LIGHTING);
+				glPopMatrix();
+
+				glPushMatrix();
+					glDisable(GL_LIGHTING);
+					glRotatef(20, 1, 0, 0);
+					glTranslatef(-3.0, 12.0, 8.0);
+					glRotatef(-90, 0, 1, 0);
+					pris.esfera(4.0, 100.0, 100.0, eye.GLindex);
+					glEnable(GL_LIGHTING);
+				glPopMatrix();
+
+			glPopMatrix();
+
+		glPopMatrix();
+
+		//----------------Cola----------------------------------
+
+		glPushMatrix();
+			glDisable(GL_LIGHTING);
+			glTranslatef(0.0, 10.0, 40.0);
+			glRotatef(45,1,0,0);
+			pris.cilindro(3.0, 30.0, 150.0, hair.GLindex);
+			glEnable(GL_LIGHTING);
+		glPopMatrix();
+
+		
+	glPopMatrix();
+	
+
+}
+
+void perroDefault() {
+	rotPaso1 = 0;
+	posZ = 0;
+	rotPaso2 = 0;
+
+	KeyFramePerro[0].rotPaso1 = 0;
+	KeyFramePerro[0].rotPaso2 = 0;
+	KeyFramePerro[0].posZ = 0;
+	KeyFramePerro[0].incDesplaza = 0;
+	KeyFramePerro[0].incDegree1 = 0;
+	KeyFramePerro[0].incDegree2 = 0;
+
+	KeyFramePerro[1].rotPaso1 = 25;
+	KeyFramePerro[1].rotPaso2 = 0;
+	KeyFramePerro[1].posZ = 40;
+	KeyFramePerro[1].incDesplaza = 0;
+	KeyFramePerro[1].incDegree1 = 0;
+	KeyFramePerro[1].incDegree2= 0;
+
+	KeyFramePerro[2].rotPaso1 = 0;
+	KeyFramePerro[2].rotPaso2 = 25;
+	KeyFramePerro[2].posZ = 80;
+	KeyFramePerro[2].incDesplaza = 0;
+	KeyFramePerro[2].incDegree1 = 0;
+	KeyFramePerro[2].incDegree2 = 0;
+
+	KeyFramePerro[3].rotPaso1 = 25;
+	KeyFramePerro[3].rotPaso2 = 0;
+	KeyFramePerro[3].posZ = 40;
+	KeyFramePerro[3].incDesplaza = 0;
+	KeyFramePerro[3].incDegree1 = 0;
+	KeyFramePerro[3].incDegree2 = 0;
+
+	KeyFramePerro[4].rotPaso1 = 0;
+	KeyFramePerro[4].rotPaso2 = 25;
+	KeyFramePerro[4].posZ = 0;
+	KeyFramePerro[4].incDesplaza = 0;
+	KeyFramePerro[4].incDegree1 = 0;
+	KeyFramePerro[4].incDegree2 = 0;
+
+	/*KeyFramePerro[5].rotPaso1 = 0;
+	KeyFramePerro[5].rotPaso2 = 0;
+	KeyFramePerro[5].posZ = 0;
+	KeyFramePerro[5].incDesplaza = 0;
+	KeyFramePerro[5].incDegree1 = 0;
+	KeyFramePerro[5].incDegree2 = 0;*/
 }
 			
 void InitGL(GLvoid)     // Inicializamos parametros
@@ -409,7 +724,7 @@ void InitGL(GLvoid)     // Inicializamos parametros
 	wood.BuildGLTexture();
 	wood.ReleaseImage();
 
-	wall.LoadTGA("Textures/blueCWall.tga");
+	wall.LoadTGA("Textures/blueWall.tga");
 	wall.BuildGLTexture();
 	wall.ReleaseImage();
 
@@ -465,6 +780,38 @@ void InitGL(GLvoid)     // Inicializamos parametros
 	cabecera.BuildGLTexture();
 	cabecera.ReleaseImage();
 
+	hair.LoadTGA("Textures/hair.tga");
+	hair.BuildGLTexture();
+	hair.ReleaseImage();
+
+	eye.LoadTGA("Textures/eye.tga");
+	eye.BuildGLTexture();
+	eye.ReleaseImage();
+
+	discoBall.LoadTGA("Textures/discoBall.tga");
+	discoBall.BuildGLTexture();
+	discoBall.ReleaseImage();
+
+	pillow.LoadTGA("Textures/pillow.tga");
+	pillow.BuildGLTexture();
+	pillow.ReleaseImage();
+
+	wooden.LoadTGA("Textures/wooden.tga");
+	wooden.BuildGLTexture();
+	wooden.ReleaseImage();
+
+	orangeWall.LoadTGA("Textures/orangeWall.tga");
+	orangeWall.BuildGLTexture();
+	orangeWall.ReleaseImage();
+
+	stoneWall.LoadTGA("Textures/stoneWall2.tga");
+	stoneWall.BuildGLTexture();
+	stoneWall.ReleaseImage();
+
+	whiteStone.LoadTGA("Textures/whiteStone.tga");
+	whiteStone.BuildGLTexture();
+	whiteStone.ReleaseImage();
+
 	//tv._3dsLoad("Models/kitt.3ds");
 
 	glEnable(GL_LIGHTING);
@@ -478,7 +825,14 @@ void InitGL(GLvoid)     // Inicializamos parametros
 
 	objCamera.Position_Camera(-140,2.5f,360, 140,2.5f,300, 0, 1, 0);
 
+	//NEW Iniciar variables de KeyFramePs
+	for (int i = 0; i<MAX_FRAMES; i++)
+	{
+		KeyFrameP[i].incDegree = 0;
+		KeyFrameP[i].degree = 26 * i;
+	}
 
+	perroDefault();
 }
 
 void pintaTexto(float x, float y, float z, void *font,char *string)
@@ -531,15 +885,22 @@ void display ( void )   // Creamos la funcion donde se dibuja
 
 					construirCasa();
 
+					fachada();
+
 					roperoBuroCaja();
 
 					mesaSilla();
 
 					cama();
 
+					esferaRota();
+
+					perro();
+
 					/*glPushMatrix();
 						glDisable(GL_COLOR_MATERIAL);
 						tv.GLrender(NULL, _SHADED, 1.0);
+						glEnable(GL_COLOR_MATERIAL);
 					glPopMatrix();*/
 
 			glPopMatrix(); //pop del segundo push matriz
@@ -552,7 +913,107 @@ void display ( void )   // Creamos la funcion donde se dibuja
 
 void animacion()
 {
-	
+
+	//Movimiento de la puerta
+	if (playPuerta)
+	{
+		if (i_curr_steps >= i_max_steps) //end of animation between frames?
+		{
+			playIndexP++;
+			if (playIndexP > 4)	//end of total animation?
+			{
+				printf("termina anim\n");
+				playIndexP = 0;
+				playPuerta = 0;
+				rotPuerta = 0;
+			}
+			else //Next frame interpolationPuertas
+			{
+				i_curr_steps = 0; //Reset counter
+				interpolationPuerta(); //interpolationPuerta
+			}
+		}
+		else
+		{
+			if (playIndexP == 0)
+			{
+				interpolationPuerta();
+			}
+			//Draw animation
+			rotPuerta += KeyFrameP[playIndexP].incDegree;
+
+			i_curr_steps++;
+		}
+	}
+
+	//Movimiento perro
+		if (i_curr_steps >= i_max_steps) //end of animation between frames?
+		{
+			playIndexPerro++;
+			if (playIndexPerro > 4)	//end of total animation?
+			{
+				printf("termina anim\n");
+				playIndexPerro = 0;
+				perroDefault();
+			}
+			else //Next frame interpolationPuertas
+			{
+				i_curr_steps = 0; //Reset counter
+				interpolationPerro(); //interpolationPuerta
+			}
+		}
+		else
+		{
+			if (playIndexPerro == 0)
+			{
+				interpolationPerro();
+			}
+			//Draw animation
+			rotPaso1 += KeyFramePerro[playIndexPerro].incDegree1;
+			posZ += KeyFramePerro[playIndexPerro].incDesplaza;
+			rotPaso2 += KeyFramePerro[playIndexPerro].incDegree2;
+
+			i_curr_steps++;
+		}
+		
+	//Movimiento esfera
+		if (esfera >= 360)
+		{
+			esfera = 0;
+		}
+		else {
+			esfera++;
+		}
+
+	//Movimiento esfera
+		if (rotVentana >= 90)
+		{
+			rotVentana--;
+			abre = 0;
+		}
+		else if(rotVentana <= 0){
+			rotVentana++;
+			abre = 1;
+		}
+		else if (abre) {
+			rotVentana++;
+		}
+		else {
+			rotVentana--;
+		}
+		
+	//Movimiento almohada
+		if (rotAlm >= 60)
+		{
+			rotAlm = 0;
+			transAlm = 0;
+		}
+		else {
+			rotAlm++;
+			transAlm -= 0.1;
+		}
+
+	glutPostRedisplay();
 }
 
 void reshape ( int width , int height )   // Creamos funcion Reshape
@@ -597,6 +1058,16 @@ void keyboard ( unsigned char key, int x, int y )  // Create Keyboard Function
 		case 'd':
 		case 'D':
 			objCamera.Move_Camera(CAMERASPEED + 0.1);
+			break;
+
+		case 'o':
+		case 'O':
+			objCamera.UpDown_Camera(CAMERASPEED);
+			break;
+
+		case 'p':
+		case 'P':
+			objCamera.UpDown_Camera(-CAMERASPEED);
 			break;
 
 		case 27:        // Cuando Esc es presionado...
