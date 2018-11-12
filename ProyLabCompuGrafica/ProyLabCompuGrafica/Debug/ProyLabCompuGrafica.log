@@ -1,2 +1,4 @@
 ﻿  main.cpp
+c:\users\alfca\documents\escuela\compugrafica\proylabcompugrafica\proylabcompugrafica\proylabcompugrafica\proylabcompugrafica\main.cpp(29): warning C4838: la conversión de 'double' en 'GLfloat' requiere una conversión de restricción
+c:\users\alfca\documents\escuela\compugrafica\proylabcompugrafica\proylabcompugrafica\proylabcompugrafica\proylabcompugrafica\main.cpp(30): warning C4838: la conversión de 'double' en 'GLfloat' requiere una conversión de restricción
   ProyLabCompuGrafica.vcxproj -> C:\Users\alfca\Documents\Escuela\CompuGrafica\ProyLabCompuGrafica\ProyLabCompuGrafica\ProyLabCompuGrafica\Debug\ProyLabCompuGrafica.exe
